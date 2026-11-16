@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A safe AI browser agent for finding information on public websites." />
+  <title>AI Browser Agent</title>
+  <style>
+    /* Theme customization: update these variables to rebrand the interface. */
+    :root {
+      --app-name: "AI Browser Agent";
+      --accent: #e8c982;
+      --accent-strong: #f2dba2;
+      --accent-ink: #231b0b;
+      --background: #11110f;
+      --background-soft: #1a1915;
+      --card: rgba(39, 37, 30, 0.78);
+      --card-strong: rgba(50, 47, 37, 0.92);
+      --text: #f7f4ec;
+      --muted: #aaa698;
+      --border: rgba(232, 201, 130, 0.17);
+      --success: #78d9a1;
+      --danger: #f0a6a6;
+      --radius: 22px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); font-family: var(--font); background: radial-gradient(circle at 20% 0%, rgba(232,201,130,.10), transparent 35%), linear-gradient(135deg, var(--background), #0b0b0a 70%); }
+    .shell { min-height: 100vh; display: flex; flex-direction: column; max-width: 1120px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 52px) 22px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 34px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .mark { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; color: var(--accent-ink); background: linear-gradient(140deg, var(--accent-strong), var(--accent)); box-shadow: 0 8px 28px rgba(232,201,130,.16); font-weight: 900; }
+    h1 { margin: 0; font-size: 1rem; letter-spacing: .02em; }
+    .tagline { margin: 3px 0 0; color: var(--muted); font-size: .82rem; }
+    .safety-pill { border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 8px 12px; font-size: .75rem; white-space: nowrap; background: rgba(255,255,255,.025); }
+    main { flex: 1; display: flex; flex-direction: column; }
+    .intro { padding: clamp(24px, 6vw, 64px) 0 26px; max-width: 700px; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .16em; font-size: .7rem; font-weight: 700; }
+    h2 { margin: 12px 0 12px; font-size: clamp(2rem, 6vw, 4.1rem); line-height: .98; letter-spacing: -.055em; font-weight: 700; }
+    .intro p { color: var(--muted); max-width: 560px; line-height: 1.65; margin: 0; font-size: 1rem; }
+    #messages { display: flex; flex-direction: column; gap: 14px; padding: 10px 0 20px; }
+    .message { max-width: 88%; animation: rise .24s ease-out; }
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: stretch; max-width: 100%; }
+    .bubble, .response-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 17px 19px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+    .bubble { background: rgba(232,201,130,.10); color: var(--accent-strong); border-bottom-right-radius: 7px; }
+    .response-card { background: linear-gradient(135deg, var(--card-strong), var(--card)); box-shadow: 0 15px 50px rgba(0,0,0,.16); }
+    .status-row { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .76rem; margin-top: 14px; }
+    .complete { color: var(--success); }
+    .error-card { border-color: rgba(240,166,166,.28); background: rgba(240,166,166,.07); }
+    .spinner { width: 12px; height: 12px; border: 2px solid rgba(232,201,130,.25); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    .check { width: 16px; height: 16px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--success); color: #0c2717; font-size: .68rem; font-weight: 900; }
+    .card-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    button { font: inherit; cursor: pointer; }
+    .copy { border: 1px solid var(--border); background: transparent; color: var(--muted); padding: 7px 11px; border-radius: 10px; font-size: .76rem; }
+    .copy:hover { color: var(--accent-strong); border-color: rgba(232,201,130,.45); }
+    .composer-wrap { margin-top: auto; padding-top: 22px; position: sticky; bottom: 0; background: linear-gradient(transparent, var(--background) 25%); }
+    .composer { display: flex; gap: 10px; align-items: flex-end; padding: 10px; border: 1px solid var(--border); border-radius: 18px; background: rgba(25,24,20,.88); backdrop-filter: blur(14px); }
+    textarea { flex: 1; resize: none; min-height: 46px; max-height: 150px; padding: 12px 12px; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; line-height: 1.45; }
+    textarea::placeholder { color: #817d70; }
+    .send { border: 0; border-radius: 12px; padding: 12px 17px; min-width: 76px; color: var(--accent-ink); background: var(--accent); font-weight: 750; transition: transform .15s, background .15s; }
+    .send:hover { transform: translateY(-1px); background: var(--accent-strong); }
+    .send:disabled { cursor: wait; opacity: .55; transform: none; }
+    .hint { color: #777367; font-size: .72rem; margin: 9px 3px 0; }
+    footer { color: #716d62; font-size: .72rem; padding-top: 18px; }
+    @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 560px) { .shell { padding-top: 18px; } header { align-items: flex-start; } .safety-pill { display: none; } .intro { padding-top: 30px; } h2 { font-size: 2.65rem; } .composer { flex-wrap: wrap; } textarea { flex-basis: 100%; } .send { margin-left: auto; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><div class="mark" aria-hidden="true">✦</div><div><h1>AI Browser Agent</h1><p class="tagline">Safe answers from the public web</p></div></div>
+      <div class="safety-pill">Public browsing only</div>
+    </header>
+    <main>
+      <section class="intro" id="empty-state"><div class="eyebrow">A calmer way to browse</div><h2>Ask for what you need.</h2><p>Tell the agent what you would like to find on a public website. It can read pages and follow ordinary links, while keeping sensitive and consequential actions off-limits.</p></section>
+      <section id="messages" aria-live="polite" aria-label="Conversation"></section>
+      <div class="composer-wrap">
+        <form class="composer" id="composer">
+          <textarea id="task" rows="1" maxlength="2000" placeholder="e.g. Go to example.com and tell me the page title." aria-label="Browser task"></textarea>
+          <button class="send" id="send" type="submit">Send</button>
+        </form>
+        <div class="hint">Enter to send · Shift + Enter for a new line</div>
+      </div>
+    </main>
+    <footer>Designed for safe, read-only exploration of public websites.</footer>
+  </div>
+  <script>
+    const composer = document.getElementById('composer');
+    const taskInput = document.getElementById('task');
+    const sendButton = document.getElementById('send');
+    const messages = document.getElementById('messages');
+    const emptyState = document.getElementById('empty-state');
+
+    function addMessage(kind, text, pending = false) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `message ${kind}`;
+      const card = document.createElement('div');
+      card.className = kind === 'user' ? 'bubble' : 'response-card';
+      if (pending) {
+        card.innerHTML = '<div class="status-row"><span class="spinner"></span><span>Agent is working through your request…</span></div>';
+      } else {
+        const content = document.createElement('div');
+        content.textContent = text;
+        card.appendChild(content);
+      }
+      wrapper.appendChild(card);
+      messages.appendChild(wrapper);
+      wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return { wrapper, card };
+    }
+
+    function addAnswer(text, success) {
+      const { card } = addMessage('assistant', text);
+      card.classList.toggle('error-card', !success);
+      const actions = document.createElement('div');
+      actions.className = 'card-actions';
+      const copy = document.createElement('button');
+      copy.className = 'copy'; copy.type = 'button'; copy.textContent = 'Copy response';
+      copy.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+          else { const area = document.createElement('textarea'); area.value = text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); }
+          copy.textContent = 'Response copied to clipboard';
+          setTimeout(() => { copy.textContent = 'Copy response'; }, 1800);
+        } catch { copy.textContent = 'Copy unavailable'; setTimeout(() => { copy.textContent = 'Copy response'; }, 1800); }
+      });
+      actions.appendChild(copy); card.appendChild(actions);
+      if (success) { const status = document.createElement('div'); status.className = 'status-row complete'; status.innerHTML = '<span class="check">✓</span><span>Complete</span>'; card.appendChild(status); }
+    }
+
+    async function submitTask(event) {
+      event.preventDefault();
+      const task = taskInput.value.trim();
+      if (!task || sendButton.disabled) return;
+      emptyState.hidden = true;
+      addMessage('user', task);
+      const pending = addMessage('assistant', '', true);
+      taskInput.value = ''; taskInput.style.height = 'auto'; sendButton.disabled = true; sendButton.textContent = 'Working';
+      try {
+        const response = await fetch('/execute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task }) });
+        const result = await response.json().catch(() => ({}));
+        pending.wrapper.remove();
+        const answer = typeof result.answer === 'string' && result.answer.trim() ? result.answer : 'I couldn’t finish that task. Please try again with a simpler request.';
+        addAnswer(answer, response.ok && result.success === true);
+      } catch {
+        pending.wrapper.remove();
+        addAnswer('I couldn’t reach the agent right now. Please try again in a moment.', false);
+      } finally { sendButton.disabled = false; sendButton.textContent = 'Send'; taskInput.focus(); }
+    }
+    taskInput.addEventListener('input', () => { taskInput.style.height = 'auto'; taskInput.style.height = `${Math.min(taskInput.scrollHeight, 150)}px`; });
+    taskInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); composer.requestSubmit(); } });
+    composer.addEventListener('submit', submitTask);
+  </script>
+</body>
+</html>
